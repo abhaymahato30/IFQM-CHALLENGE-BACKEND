@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Env
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache
+.cache/
+*.pid
+*.seed
+*.tgz
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+# Firebase Service Account (DO NOT COMMIT)
+src/config/firebaseServiceAccount.json
