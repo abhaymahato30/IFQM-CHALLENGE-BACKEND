@@ -2,6 +2,7 @@
 const express = require("express");
 const verifyFirebaseToken = require("../middleware/authMiddleware"); // your Firebase auth middleware
 const userController = require("../controllers/userController");
+const firebaseAuthOnly = require("../middleware/verifyFirebaseToken");
 
 const router = express.Router();
 
@@ -16,6 +17,28 @@ router.use((req, res, next) => {
 // -------------------------
 // All protected user routes
 // -------------------------
+//  Register new user
+router.post("/", firebaseAuthOnly, async (req, res) => {
+  try {
+    const User = require("../models/User");
+    const { name, picture } = req.body;
+
+    const firebaseUid = req.firebaseUser.uid;
+    const email = req.firebaseUser.email;
+
+    let user = await User.findOne({ firebaseUid });
+    if (user) {
+      return res.status(200).json({ success: true, data: user });
+    }
+
+    user = await User.create({ name, email, firebaseUid, picture });
+    res.status(201).json({ success: true, data: user });
+  } catch (err) {
+    console.error("❌ Create user error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.get("/profile", verifyFirebaseToken, userController.getProfile);
 router.get("/my-challenges", verifyFirebaseToken, userController.getMyChallenges);
 router.get("/my-solutions", verifyFirebaseToken, userController.getMySolutions);
