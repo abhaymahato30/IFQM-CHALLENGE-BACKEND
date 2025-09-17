@@ -35,6 +35,24 @@ const challengeSchema = new mongoose.Schema({
   deadline: { type: Date, default: null },
 
   contact_info: { type: contactInfoSchema, required: true },
+  // 🔑 Admin panel fields
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // Who submitted the challenge
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // Admin who approved/rejected
+    },
+    rejectionReason: {
+      type: String, // optional rejection message
+      default: null,
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model("Challenge", challengeSchema);

@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 
 // Achievement sub-schema
 const achievementSchema = new mongoose.Schema({
-  title: { type: String, required: true }
+  title: { type: String, required: true },
 });
 
 // User schema
@@ -12,44 +12,49 @@ const userSchema = new mongoose.Schema(
     firebaseUid: {
       type: String,
       required: true,
-      unique: true // Links to Firebase Auth UID
+      unique: true, // Links to Firebase Auth UID
     },
     name: {
-      type: String
+      type: String,
     },
     email: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
     },
     is_verified: {
       type: Boolean,
-      default: false
+      default: false,
+    },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
     },
     skills: {
       type: [String],
-      default: []
+      default: [],
     },
     achievements: {
       type: [achievementSchema],
-      default: []
+      default: [],
     },
     active_challenges: {
       type: Number,
-      default: 0
+      default: 0,
     },
     solutions_submitted: {
       type: Number,
-      default: 0
+      default: 0,
     },
     rewards_earned: {
       type: Number,
-      default: 0
+      default: 0,
     },
     avg_rating: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   { timestamps: true }
 );

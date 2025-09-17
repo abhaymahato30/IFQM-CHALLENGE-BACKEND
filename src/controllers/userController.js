@@ -7,29 +7,11 @@ const User = require("../models/User");
 // -------------------------
 exports.getProfile = async (req, res) => {
   try {
-    const { uid, email, name, email_verified, picture } = req.user; 
-    // req.user is set by verifyFirebaseToken middleware
-
-    let user = await User.findOne({ firebaseUid: uid });
-
-    if (!user) {
-      // 🆕 Create new user if not exists
-      user = await User.create({
-        firebaseUid: uid,
-        email,
-        name,
-        avatar: picture || null,
-        is_verified: email_verified,
-      });
-      console.log("🆕 New user created:", user);
-    } else {
-      console.log("✅ Existing user found:", user);
-    }
-
-    res.json({ success: true, data: user });
+    // req.user is already populated by middleware
+    return res.status(200).json({ success: true, data: req.user });
   } catch (err) {
     console.error("❌ getProfile error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: "Server error", error: err.message });
   }
 };
 
@@ -38,14 +20,12 @@ exports.getProfile = async (req, res) => {
 // -------------------------
 exports.getMyChallenges = async (req, res) => {
   try {
-    console.log("🔥 getMyChallenges called", req.user);
-    const firebaseUid = req.user?.uid;
-    const challenges = await Challenge.find({ createdBy: firebaseUid }).lean();
-    console.log("challenges found:", challenges.length);
-    res.json(challenges);
+    const filter = req.user.role === "admin" ? {} : { status: "approved" };
+    const challenges = await Challenge.find({ createdBy: req.user.id, ...filter }).lean();
+    return res.json({ success: true, data: challenges });
   } catch (err) {
     console.error("getMyChallenges Error:", err);
-    res.status(500).json({ message: "Server Error", error: err.message });
+    return res.status(500).json({ success: false, message: "Server Error", error: err.message });
   }
 };
 
@@ -54,14 +34,19 @@ exports.getMyChallenges = async (req, res) => {
 // -------------------------
 exports.getMySolutions = async (req, res) => {
   try {
-    console.log("🔥 getMySolutions called", req.user);
-    const firebaseUid = req.user?.uid;
-    const solutions = await Solution.find({ createdBy: firebaseUid }).lean();
-    console.log("solutions found:", solutions.length);
-    res.json(solutions);
+    const solutions = await Solution.find({ user_id: req.user.id })
+      .populate("challenge_id", "title status")
+      .lean();
+
+    // Admins see all, normal users only approved challenges
+    const filtered = solutions.filter(
+      s => req.user.role === "admin" || s.challenge_id.status === "approved"
+    );
+
+    return res.json({ success: true, data: filtered });
   } catch (err) {
     console.error("getMySolutions Error:", err);
-    res.status(500).json({ message: "Server Error", error: err.message });
+    return res.status(500).json({ success: false, message: "Server Error", error: err.message });
   }
 };
 
@@ -70,13 +55,14 @@ exports.getMySolutions = async (req, res) => {
 // -------------------------
 exports.getBookmarks = async (req, res) => {
   try {
-    console.log("🔥 getBookmarks called", req.user);
-    const firebaseUid = req.user?.uid;
-    const user = await User.findOne({ firebaseUid }).populate("bookmarks").lean();
-    console.log("bookmarks found:", user?.bookmarks?.length || 0);
-    res.json(user?.bookmarks || []);
+    const user = await User.findById(req.user.id).populate("bookmarks").lean();
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    // Only approved challenges
+    const bookmarks = (user.bookmarks || []).filter(b => b.status === "approved");
+    return res.json({ success: true, data: bookmarks });
   } catch (err) {
     console.error("getBookmarks Error:", err);
-    res.status(500).json({ message: "Server Error", error: err.message });
+    return res.status(500).json({ success: false, message: "Server Error", error: err.message });
   }
 };
