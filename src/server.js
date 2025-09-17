@@ -12,7 +12,12 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "*",          // allow requests from any origin
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,    // allow cookies/auth headers
+}));
 app.use(express.json());
 app.use(helmet());
 app.use(morgan("dev"));
